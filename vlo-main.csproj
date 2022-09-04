@@ -12,21 +12,24 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AWSSDK.S3" Version="3.7.9.43" />
+        <PackageReference Include="AWSSDK.S3" Version="3.7.9.45" />
         <PackageReference Include="CanonicalEmails" Version="1.0.2" />
         <PackageReference Include="Fluid.Core" Version="2.2.15" />
         <PackageReference Include="IdentityModel.AspNetCore.AccessTokenValidation" Version="1.0.0-preview.3" />
         <PackageReference Include="IdentityModel.AspNetCore.OAuth2Introspection" Version="6.1.0" />
         <PackageReference Include="Mcrio.Configuration.Provider.Docker.Secrets" Version="1.0.1" />
+        <PackageReference Include="MeiliSearch" Version="0.11.0" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.8" />
         <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="6.0.8" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.0-preview.6.22330.3" />
+        <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="6.0.8" />
+        <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="6.0.8" />
         <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="6.22.1" />
         <PackageReference Include="nClam" Version="7.0.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.6" />
         <PackageReference Include="PreMailer.Net" Version="2.4.0" />
         <PackageReference Include="Sentry.AspNetCore" Version="3.20.1" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
         <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.4.0" />
         <PackageReference Include="Swashbuckle.AspNetCore.ReDoc" Version="6.4.0" />
     </ItemGroup>

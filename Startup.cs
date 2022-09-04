@@ -3,6 +3,8 @@ using AccountsData.Data;
 using AccountsData.Models.DataModels;
 using Amazon.S3;
 using IdentityModel.AspNetCore.AccessTokenValidation;
+using Meilisearch;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -44,7 +46,9 @@ public partial class Startup
                 bucketName = "boards",
                 videoBucketName = "video",
                 clamHost = "",
-                clamPort = "";
+                clamPort = "",
+                meiliHost = "",
+                meiliMasterKey = "";
             List<string> corsorigins = new ();
 
             // get configuration options (!add docker secrets for prod)
@@ -66,6 +70,9 @@ public partial class Startup
                 clamHost = Configuration["Clam:Host"];
                 clamPort = Configuration["Clam:Port"];
                 
+                meiliHost = Configuration["Meili:Host"];
+                meiliMasterKey = Configuration["Meili:MasterKey"];
+                
                 // TODO: remove temporary credentials from mailgun before publishing source code
                 mailKey = Configuration["Mailgun:ApiKey"];
                 mailDomain = Configuration["Mailgun:MailDomain"];
@@ -74,7 +81,6 @@ public partial class Startup
             if (env.IsDevelopment())
             {
                 services.AddDatabaseDeveloperPageExceptionFilter();
-                corsorigins.Add("http://localhost:3000");
             }
             
             services.AddTransient(o => new MinioConfig {BucketName = bucketName, VideoBucketName = videoBucketName});
@@ -89,10 +95,12 @@ public partial class Startup
             
             services.AddTransient((o) => new AmazonS3Client(minioAccessToken, minioSecret, s3config));
 
+            services.AddScoped(x => new MeilisearchClient(meiliHost, meiliMasterKey));
             services.AddScoped(x => new MailgunConfig {ApiKey = mailKey, DomainName = mailDomain});
             services.AddScoped<IEmailSender, EmailSender>();
             services.AddHttpClient();
             services.AddScoped<EmailTemplates>();
+            
             
             services.AddTransient(x => new CaptchaCredentials(captchaPk, captchaKey));
             services.AddTransient<Captcha>();
@@ -124,10 +132,16 @@ public partial class Startup
                 c.IncludeXmlComments(xmlPath);
             });
 
+            AspNetIdentityStartup.AddAspNetIdentity(services);
+
             services.AddControllersWithViews();
             
-            services.AddAuthentication("token")
-                .AddJwtBearer("token", options =>
+            services.AddAuthentication(o =>
+                {
+                    o.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    o.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
                 {
                     options.Authority = authAuthority;
                     options.Audience = authAudience;

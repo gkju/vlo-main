@@ -58,8 +58,9 @@ public partial class Startup {
         
         app.UseHttpsRedirection();
         app.UseRouting();
-        app.UseAuthorization();
         app.UseCors("DefaultExternalOrigins");
+        app.UseAuthentication();
+        app.UseAuthorization();
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllerRoute(
