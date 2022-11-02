@@ -18,7 +18,7 @@ namespace vlo_main.Areas.Article;
 [Area("Articles")]
 [Route("api/[area]/[controller]")]
 [Authorize]
-public class ArticleController : ControllerBase
+public partial class ArticleController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ApplicationDbContext _db;
@@ -52,7 +52,8 @@ public class ArticleController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> OnPostAsync()
     {
-        var user = await _userManager.GetUserAsync(User);
+        var userProto = await _userManager.GetUserAsync(User);
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userProto.Id);
         var article = new AccountsData.Models.DataModels.Article
         {
             Title = "",
@@ -77,6 +78,7 @@ public class ArticleController : ControllerBase
         });
 
         _db.Articles.Add(article);
+        user.Articles.Add(article);
         await _db.SaveChangesAsync();
         
         return Ok(article.ArticleId);
@@ -281,6 +283,7 @@ public class ArticleController : ControllerBase
             return this.GenBadRequestProblem();
         }
 
+        article.AutoPublish = true;
         article.AutoPublishOn = input.PublishOn;
         await _db.SaveChangesAsync();
         
@@ -315,6 +318,10 @@ public class ArticleController : ControllerBase
         }
 
         article.Public = input.Public;
+        if (!input.Public)
+        {
+            article.AutoPublish = false;
+        }
         await _db.SaveChangesAsync();
         
         return Ok(article.AutoPublishOn);
@@ -424,7 +431,7 @@ public class ArticleController : ControllerBase
 
     [Route("SearchArticles")]
     [HttpGet]
-    public async Task<ActionResult> SearchArticles([Required] string query)
+    public async Task<ActionResult> SearchArticles(string query = "")
     {
         IReadOnlyCollection<MeiliArticle> articleCandidates;
         IEnumerable<string> idCandidates = new List<string>();
@@ -442,11 +449,14 @@ public class ArticleController : ControllerBase
         var articles = (await _db.Articles
                 .Include(a => a.Editors)
                 .Include(a => a.Reviewers)
+                .Include(a => a.Tags)
+                .Include(a => a.Author)
                 .Where(a => idCandidates.Contains(a.ArticleId) || a.Title.Contains(query) ||
                             a.ContentText.Contains(query) || a.Author.UserName.Contains(query))
+                .OrderByDescending(a => a.ModifiedOn)
                 .ToListAsync())
             .Where(a => a.IsPublic())
-            .Take(100)
+            .Take(10)
             .ToList();
 
         return Ok(articles);

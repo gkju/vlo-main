@@ -105,6 +105,41 @@ public class TagController : ControllerBase
         return Ok(article.Tags);
     }
     
+    [Route("RemoveFromArticle")]
+    [HttpDelete]
+    public async Task<ActionResult> RemoveFromArticle(string articleId, string tagContent)
+    {
+        var tag = Tag.NormalizeTagString(tagContent);
+        var article = await _db.Articles
+            .Include(a => a.Editors)
+            .Include(a => a.Reviewers)
+            .Include(a => a.Tags)
+            .Include(a => a.Picture.Owner)
+            .FirstOrDefaultAsync(a => a.ArticleId == articleId);
+        var user = await _userManager.GetUserAsync(User);
+        if (article is null || user is null)
+        {
+            ModelState.AddModelError(Constants.ArticleError, Constants.NotFoundCode);
+            return this.GenBadRequestProblem();
+        }
+        if (!article.UserCanEdit(user))
+        {
+            ModelState.AddModelError(Constants.ArticleError, Constants.CannotEditCode);
+            return this.GenBadRequestProblem();
+        }
+        
+        var dbTag = article.Tags.FirstOrDefault(t => t.Content == tag);
+        if (dbTag == null)
+        {
+            ModelState.AddModelError(Constants.TagError, Constants.TagNotFound);
+            return this.GenBadRequestProblem();
+        }
+        
+        article.Tags.Remove(dbTag);
+        await _db.SaveChangesAsync();
+        return Ok(article.Tags);
+    }
+    
     [HttpGet]
     [Route("Search")]
     public async Task<ActionResult> Search(string query = "")
