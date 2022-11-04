@@ -46,11 +46,12 @@ public class FileController : ControllerBase
     {
         var userProto = await _userManager.GetUserAsync(User);
         var user = await _db.Users
+            .Where(u => u.Id == userProto.Id)
             .Include(u => u.Folders)
                 .ThenInclude(f => f.Files)
             .Include(u => u.Folders)
             .Include(a => a.Files)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(u => u.Id == userProto.Id);
 
         if (user is null)
         {
@@ -78,10 +79,11 @@ public class FileController : ControllerBase
     {
         var userProto = await _userManager.GetUserAsync(User);
         var user = await _db.Users
+            .Where(u => u.Id == userProto.Id)
             .Include(u => u.Folders)
             .ThenInclude(f => f.Files)
             .Include(u => u.Folders)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(u => u.Id == userProto.Id);
 
         if (user is null)
         {
@@ -112,10 +114,11 @@ public class FileController : ControllerBase
         
         var userProto = await _userManager.GetUserAsync(User);
         var user = await _db.Users
+            .Where(u => u.Id == userProto.Id)
             .Include(u => u.Folders)
             .ThenInclude(f => f.Files)
             .Include(u => u.Folders)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(u => u.Id == userProto.Id);
 
         if (user is null)
         {
@@ -141,7 +144,9 @@ public class FileController : ControllerBase
             return this.GenBadRequestProblem();
         }
 
-        return Ok(user.Folders);
+        var folders = user.Folders;
+
+        return Ok(folders);
     }
     
     [Route("AddSubFile")]
@@ -151,9 +156,10 @@ public class FileController : ControllerBase
     {
         var userProto = await _userManager.GetUserAsync(User);
         var user = await _db.Users
+            .Where(u => u.Id == userProto.Id)
             .Include(u => u.Folders)
             .ThenInclude(f => f.Files)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(u => u.Id == userProto.Id);
 
         if (user is null)
         {
@@ -186,7 +192,9 @@ public class FileController : ControllerBase
             return this.GenBadRequestProblem();
         }
 
-        return Ok(user.Folders);
+        var folders = user.Folders;
+        
+        return Ok(folders);
     }
     
     [Route("RemoveSubFolder")]
@@ -196,10 +204,11 @@ public class FileController : ControllerBase
     {
         var userProto = await _userManager.GetUserAsync(User);
         var user = await _db.Users
+            .Where(u => u.Id == userProto.Id)
             .Include(u => u.Folders)
             .ThenInclude(f => f.Files)
             .Include(u => u.Folders)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(u => u.Id == userProto.Id);
 
         if (user is null)
         {
@@ -241,9 +250,10 @@ public class FileController : ControllerBase
     {
         var userProto = await _userManager.GetUserAsync(User);
         var user = await _db.Users
+            .Where(u => u.Id == userProto.Id)
             .Include(u => u.Folders)
             .ThenInclude(f => f.Files)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(u => u.Id == userProto.Id);
 
         if (user is null)
         {
@@ -289,9 +299,10 @@ public class FileController : ControllerBase
     {
         var userProto = await _userManager.GetUserAsync(User);
         var user = await _db.Users
+            .Where(u => u.Id == userProto.Id)
             .Include(u => u.Folders)
             .ThenInclude(f => f.Files)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(u => u.Id == userProto.Id);
 
         if (user is null)
         {
@@ -429,7 +440,10 @@ public class FileController : ControllerBase
     public async Task<IActionResult> GeMyArticles()
     {
         ApplicationUser userProto = await _userManager.GetUserAsync(User);
-        ApplicationUser user = await _db.Users.Include(u => u.Articles).FirstOrDefaultAsync(u => u.Id == userProto.Id);
+        ApplicationUser user = await _db.Users
+            .Where(u => u.Id == userProto.Id)
+            .Include(u => u.Articles)
+            .FirstOrDefaultAsync(u => u.Id == userProto.Id);
         return Ok(user.Articles);
     }
 }

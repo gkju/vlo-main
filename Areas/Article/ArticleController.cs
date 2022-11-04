@@ -431,8 +431,9 @@ public partial class ArticleController : ControllerBase
 
     [Route("SearchArticles")]
     [HttpGet]
-    public async Task<ActionResult> SearchArticles(string query = "")
+    public async Task<ActionResult> SearchArticles(string query = "", uint count = 10, uint offset = 0)
     {
+        count = UInt32.Min(count, 100);
         IReadOnlyCollection<MeiliArticle> articleCandidates;
         IEnumerable<string> idCandidates = new List<string>();
         try
@@ -456,7 +457,8 @@ public partial class ArticleController : ControllerBase
                 .OrderByDescending(a => a.ModifiedOn)
                 .ToListAsync())
             .Where(a => a.IsPublic())
-            .Take(10)
+            .Skip(Convert.ToInt32(offset))
+            .Take(Convert.ToInt32(count))
             .ToList();
 
         return Ok(articles);
