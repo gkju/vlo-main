@@ -14,7 +14,7 @@
     <PropertyGroup Condition=" '$(RunConfiguration)' == 'https' " />
     <PropertyGroup Condition=" '$(RunConfiguration)' == 'http' " />
     <ItemGroup>
-        <PackageReference Include="AWSSDK.S3" Version="3.7.101" />
+        <PackageReference Include="AWSSDK.S3" Version="3.7.101.16" />
         <PackageReference Include="CanonicalEmails" Version="1.0.2" />
         <PackageReference Include="Fluid.Core" Version="2.2.16" />
         <PackageReference Include="IdentityModel.AspNetCore.AccessTokenValidation" Version="1.0.0-preview.3" />
@@ -38,6 +38,10 @@
 
     <ItemGroup>
       <ProjectReference Include="..\AccountsData\AccountsData.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="wwwroot" />
     </ItemGroup>
 
 </Project>

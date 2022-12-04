@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Threading.RateLimiting;
 using AccountsData.Data;
 using AccountsData.Models.DataModels;
 using Amazon.S3;
@@ -7,6 +8,7 @@ using Meilisearch;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using VLO_BOARDS;
@@ -158,6 +160,16 @@ public partial class Startup
                     options.ClientId =  authAudience;
                     options.ClientSecret = authSecret;
                 });
+            
+            services.AddRateLimiter(_ => _
+                .AddSlidingWindowLimiter(policyName: slidingPolicy, options =>
+                {
+                    options.PermitLimit = 50;
+                    options.Window = TimeSpan.FromSeconds(10);
+                    options.SegmentsPerWindow = 10;
+                    options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    options.QueueLimit = 100;
+                }));
 
             services.AddCors(options =>
             {
@@ -171,4 +183,6 @@ public partial class Startup
                     });
             });
         }
+        
+        static string slidingPolicy = "sliding";
     }

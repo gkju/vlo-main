@@ -328,6 +328,7 @@ public partial class ArticleController : ControllerBase
     }
 
     [Route("GetPicture")]
+    [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult> GetPicture(string ArticleId)
     {
@@ -337,7 +338,7 @@ public partial class ArticleController : ControllerBase
             .Include(a => a.Picture)
             .FirstOrDefaultAsync(a => a.ArticleId == ArticleId);
         var user = await _userManager.GetUserAsync(User);
-        if (article is null || user is null)
+        if (article is null)
         {
             ModelState.AddModelError(Constants.ArticleError, Constants.NotFoundCode);
             return this.GenBadRequestProblem();
@@ -382,30 +383,36 @@ public partial class ArticleController : ControllerBase
 
     [Route("GetArticle")]
     [HttpGet]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(AccountsData.Models.DataModels.Article), StatusCodes.Status200OK)]
     public async Task<ActionResult> GetArticle(string ArticleId)
     {
         var article = await _db.Articles
+            .Include(a => a.Author)
             .Include(a => a.Editors)
+            .Include(a => a.Reactions)
+            .Include(a => a.Comments)
+            .ThenInclude(c => c.Reactions)
+            .Include(a => a.Comments)
+            .ThenInclude(c => c.Author)
             .Include(a => a.Reviewers)
             .FirstOrDefaultAsync(a => a.ArticleId == ArticleId);
         var user = await _userManager.GetUserAsync(User);
-        if (article is null || user is null)
+        if (article is null)
         {
             ModelState.AddModelError(Constants.ArticleError, Constants.NotFoundCode);
             return this.GenBadRequestProblem();
         }
-        if(!article.UserCanView(user))
-        {
-            ModelState.AddModelError(Constants.ArticleError, Constants.CannotViewCode);
-            return this.GenBadRequestProblem();
-        }
 
-        return Ok(article);
+        if (article.UserCanView(user)) return Ok(article);
+        
+        ModelState.AddModelError(Constants.ArticleError, Constants.CannotViewCode);
+        return this.GenBadRequestProblem();
     }
     
     [Route("GetTags")]
     [HttpGet]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(Tag[]), StatusCodes.Status200OK)]
     public async Task<ActionResult> GetTags(string ArticleId)
     {
@@ -415,22 +422,23 @@ public partial class ArticleController : ControllerBase
             .Include(a => a.Tags)
             .FirstOrDefaultAsync(a => a.ArticleId == ArticleId);
         var user = await _userManager.GetUserAsync(User);
-        if (article is null || user is null)
+        if (article is null)
         {
             ModelState.AddModelError(Constants.ArticleError, Constants.NotFoundCode);
             return this.GenBadRequestProblem();
         }
-        if(!article.UserCanView(user))
-        {
-            ModelState.AddModelError(Constants.ArticleError, Constants.CannotViewCode);
-            return this.GenBadRequestProblem();
-        }
 
-        return Ok(article.Tags);
+        if (article.UserCanView(user)) return Ok(article.Tags);
+        
+        ModelState.AddModelError(Constants.ArticleError, Constants.CannotViewCode);
+        return this.GenBadRequestProblem();
+
     }
 
     [Route("SearchArticles")]
     [HttpGet]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(AccountsData.Models.DataModels.Article[]), StatusCodes.Status200OK)]
     public async Task<ActionResult> SearchArticles(string query = "", uint count = 10, uint offset = 0)
     {
         count = UInt32.Min(count, 100);

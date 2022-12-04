@@ -1,6 +1,8 @@
 using AccountsData.Models.DataModels;
 using Amazon.S3;
 using CanonicalEmails;
+using Microsoft.Net.Http.Headers;
+using SameSiteMode = Microsoft.AspNetCore.Http.SameSiteMode;
 
 namespace vlo_main;
 
@@ -56,19 +58,52 @@ public partial class Startup {
             NormalizeHost = true
         });
         
-        app.UseHttpsRedirection();
         app.UseRouting();
         app.UseCors("DefaultExternalOrigins");
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            OnPrepareResponse = ctx =>
+            {
+                    
+                if (ctx.Context.Request.Path.StartsWithSegments("/static"))
+                {
+                    var headers = ctx.Context.Response.GetTypedHeaders();
+                    headers.CacheControl = new CacheControlHeaderValue
+                    {
+                        Public = true,
+                        MaxAge = TimeSpan.FromDays(365)
+                    };
+                }
+                else
+                {
+                    var headers = ctx.Context.Response.GetTypedHeaders();
+                    headers.CacheControl = new CacheControlHeaderValue
+                    {
+                        Public = true,
+                        MaxAge = TimeSpan.FromDays(0),
+                        NoCache = true,
+                        NoStore = true
+                    };
+                }
+            }
+        });
+        
+        app.UseRateLimiter();
+        
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllerRoute(
                 name: "areas",
-                pattern: "/api/{area:exists}/{controller}/");
+                pattern: "/api/{area:exists}/{controller}/").RequireRateLimiting(slidingPolicy).RequireCors("DefaultExternalOrigins");
             endpoints.MapControllerRoute(
                 name: "default",
-                pattern: "/api/{controller}/{action=Index}/{id?}");
+                pattern: "/api/{controller}/{action=Index}/{id?}").RequireRateLimiting(slidingPolicy).RequireCors("DefaultExternalOrigins");
+            if (!env.IsDevelopment())
+            {
+                endpoints.MapFallbackToFile("index.html");
+            }
         });
         app.UseSentryTracing();
     }
